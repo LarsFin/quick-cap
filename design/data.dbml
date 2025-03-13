@@ -1,0 +1,43 @@
+Table incidents {
+  id integer [primary key]
+  name string
+  status string
+}
+
+Table services {
+  id integer [primary key]
+  name string
+}
+
+Table context_sources {
+  id integer [primary key]
+  name string
+}
+
+Table context_records {
+  id integer [primary key]
+  incident_id integer
+  services_context_source_id integer
+  data string
+}
+
+Table service_context_sources {
+  id integer [primary key]
+  service_id integer
+  context_source_id integer
+}
+
+Table incident_services {
+  id integer [primary key]
+  incident_id integer
+  service_id integer
+}
+
+Ref: services.id < service_context_sources.service_id
+Ref: context_sources.id < service_context_sources.context_source_id
+
+Ref: incidents.id < incident_services.incident_id
+Ref: services.id < incident_services.service_id
+
+Ref: incidents.id < context_records.incident_id
+Ref: service_context_sources.id < context_records.services_context_source_id
