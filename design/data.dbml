@@ -9,6 +9,17 @@ Table services {
   name string
 }
 
+/**
+ * incidents often have thresholds where alerts may be repeatedly sent per incident, so
+ * we can group them here and not create whole new diagnosis streams per alert
+ */
+Table incident_alerts {
+  id integer [primary key]
+  incident_id string
+}
+
+Ref: incidents.id < incident_alerts.incident_id
+
 Table context_sources {
   id integer [primary key]
   name string
@@ -21,11 +32,17 @@ Table context_records {
   data string
 }
 
+Ref: incidents.id < context_records.incident_id
+Ref: service_context_sources.id < context_records.services_context_source_id
+
 Table service_context_sources {
   id integer [primary key]
   service_id integer
   context_source_id integer
 }
+
+Ref: services.id < service_context_sources.service_id
+Ref: context_sources.id < service_context_sources.context_source_id
 
 Table incident_services {
   id integer [primary key]
@@ -33,11 +50,5 @@ Table incident_services {
   service_id integer
 }
 
-Ref: services.id < service_context_sources.service_id
-Ref: context_sources.id < service_context_sources.context_source_id
-
 Ref: incidents.id < incident_services.incident_id
 Ref: services.id < incident_services.service_id
-
-Ref: incidents.id < context_records.incident_id
-Ref: service_context_sources.id < context_records.services_context_source_id
