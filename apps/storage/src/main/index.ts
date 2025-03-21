@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 
-import { start } from "./server/start";
+import { start } from "./server";
 
 // load env variables
 dotenv.config();

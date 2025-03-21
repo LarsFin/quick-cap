@@ -4,6 +4,7 @@
   "description": "Service responsible for data management, a thin API layer sits above the integrated database, using an ORM to allow for dynamic database integration.",
   "scripts": {
     "build": "tsc",
+    "dev:migrate": "prisma migrate dev",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "start": "node build/main/index.js",
@@ -25,6 +26,8 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
+    "@prisma/client": "^6.5.0",
+    "body-parser": "^1.20.3",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "prisma": "^6.5.0",

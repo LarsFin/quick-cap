@@ -5,7 +5,6 @@ import { err, res, Result } from "./result";
 export const configSchema = z.object({
   PORT: z.coerce.number().default(7080),
 
-  DATABASE_TYPE: z.enum(["mysql", "postgres"]),
   DATABASE_URL: z.string(),
 });
 export type Config = z.infer<typeof configSchema>;
