@@ -1,14 +1,15 @@
 import { PrismaClient } from "@prisma/client";
-import { Db, Incident } from ".";
+import { Db } from ".";
+import { CreateIncident, ReadIncident } from "../services/incidents";
 
 export class PrismaDb implements Db {
   constructor(private readonly client: PrismaClient) {}
 
-  async getIncidents(): Promise<Incident[]> {
+  async getIncidents(): Promise<ReadIncident[]> {
     return this.client.incident.findMany();
   }
 
-  async createIncident(incident: Incident): Promise<Incident> {
+  async createIncident(incident: CreateIncident): Promise<ReadIncident> {
     return this.client.incident.create({ data: incident });
   }
 }

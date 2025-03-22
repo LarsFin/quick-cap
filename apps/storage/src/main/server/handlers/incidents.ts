@@ -1,18 +1,42 @@
-import { Request, Response } from "express";
+import { Request, Response, Router, RequestHandler } from "express";
 import { AppDependencies } from "..";
 
-export const getIncidentsHandler = ({ db }: AppDependencies) => {
+export const initialiseGetAllIncidentsHandler = ({
+  incidents,
+}: AppDependencies): RequestHandler => {
   return async (_: Request, res: Response) => {
-    const incidents = await db.getIncidents();
-    res.json(incidents);
+    const query = await incidents.getAll();
+
+    // TODO: handle other error types outside of just zod
+    if (query.err !== null) {
+      res.status(400).json({ error: query.err });
+      return;
+    }
+
+    res.json(query.data);
   };
 };
 
-export const createIncidentHandler = ({ db }: AppDependencies) => {
+export const initialiseCreateIncidentHandler = ({
+  incidents,
+}: AppDependencies): RequestHandler => {
   return async (req: Request, res: Response) => {
-    const body = await req.body;
-    console.log("BODY", body);
-    const incident = await db.createIncident(body);
-    res.json(incident);
+    const query = await incidents.create(req.body);
+
+    // TODO: handle other error types outside of just zod
+    if (query.err !== null) {
+      res.status(400).json({ error: query.err });
+      return;
+    }
+
+    res.json(query.data);
   };
+};
+
+export const initialiseIncidentsHandlers = (
+  router: Router,
+  dependencies: AppDependencies
+) => {
+  router.get("/incidents", initialiseGetAllIncidentsHandler(dependencies));
+  router.post("/incidents", initialiseCreateIncidentHandler(dependencies));
 };

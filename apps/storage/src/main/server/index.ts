@@ -1,27 +1,27 @@
 import express from "express";
 
 import { Config, loadConfig } from "../utils/config";
-import { Db } from "../db";
 import { initPrismaDb } from "../db/prisma";
-import { getIncidentsHandler } from "./handlers/incidents";
-import { createIncidentHandler } from "./handlers/incidents";
+import { initialiseIncidentsHandlers } from "./handlers/incidents";
+import { Incidents } from "../services/incidents";
 
 export type AppDependencies = {
-  db: Db;
+  incidents: Incidents;
 };
 
 const initialiseDependencies = (config: Config): AppDependencies => {
   // currently tying instantiation to prisma
   const db = initPrismaDb();
 
-  return { db };
+  const incidents = new Incidents(db);
+
+  return { incidents };
 };
 
 const initialiseRouter = (dependencies: AppDependencies) => {
   const router = express.Router();
 
-  router.get("/incidents", getIncidentsHandler(dependencies));
-  router.post("/incidents", createIncidentHandler(dependencies));
+  initialiseIncidentsHandlers(router, dependencies);
 
   return router;
 };
