@@ -1,4 +1,5 @@
 import { z, ZodError } from "zod";
+
 import { Db } from "../db";
 import { err, PromisedResult, res } from "../utils/result";
 
@@ -21,6 +22,22 @@ export type CreateIncident = z.infer<typeof createIncidentSchema>;
 
 export class Incidents {
   constructor(private readonly db: Db) {}
+
+  public async get(id: number): PromisedResult<ReadIncident | null, ZodError> {
+    const incident = await this.db.getIncident(id);
+
+    if (incident === null) {
+      return res(null);
+    }
+
+    const parsed = readIncidentSchema.safeParse(incident);
+
+    if (!parsed.success) {
+      return err(parsed.error);
+    }
+
+    return res(parsed.data);
+  }
 
   public async getAll(): PromisedResult<ReadIncident[], ZodError> {
     const incidents = await this.db.getIncidents();

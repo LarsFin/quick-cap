@@ -1,15 +1,16 @@
 import express from "express";
 
-import { Config, loadConfig } from "../utils/config";
 import { initPrismaDb } from "../db/prisma";
-import { initialiseIncidentsHandlers } from "./handlers/incidents";
 import { Incidents } from "../services/incidents";
+import { loadConfig } from "../utils/config";
+
+import { initialiseIncidentsHandlers } from "./handlers/incidents";
 
 export type AppDependencies = {
   incidents: Incidents;
 };
 
-const initialiseDependencies = (config: Config): AppDependencies => {
+const initialiseDependencies = (): AppDependencies => {
   // currently tying instantiation to prisma
   const db = initPrismaDb();
 
@@ -38,7 +39,7 @@ export const start = () => {
   const app = express();
   app.use(express.json());
 
-  const dependencies = initialiseDependencies(config.data);
+  const dependencies = initialiseDependencies();
   const router = initialiseRouter(dependencies);
 
   app.use("/api/v1", router);
