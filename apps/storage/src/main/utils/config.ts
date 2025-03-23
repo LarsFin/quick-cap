@@ -3,6 +3,10 @@ import { z, ZodError } from "zod";
 import { err, res, Result } from "./result";
 
 export const configSchema = z.object({
+  __DEV__: z.coerce.boolean().default(false),
+
+  API_TOKEN: z.string(),
+
   PORT: z.coerce.number().default(7080),
 
   DATABASE_URL: z.string(),
