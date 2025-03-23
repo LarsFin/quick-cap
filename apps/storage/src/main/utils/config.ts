@@ -9,6 +9,9 @@ export const configSchema = z.object({
 
   PORT: z.coerce.number().default(7080),
 
+  LOG_LEVEL: z.enum(["debug", "info", "warning", "error"]).default("info"),
+  LOG_FILE_PATH: z.string().optional(),
+
   DATABASE_URL: z.string(),
 });
 export type Config = z.infer<typeof configSchema>;

@@ -4,6 +4,7 @@
   "description": "Service responsible for data management, a thin API layer sits above the integrated database, using an ORM to allow for dynamic database integration.",
   "scripts": {
     "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only src/main/index.ts",
     "dev:migrate": "prisma migrate dev",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
@@ -23,6 +24,7 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.2.3",
     "prettier": "^3.5.3",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.2"
   },
   "dependencies": {

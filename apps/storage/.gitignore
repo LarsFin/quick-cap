@@ -61,5 +61,6 @@ tests/baselines/reference/dt
 TEST-results.xml
 .eslintcache
 *v8.log
+*.log
 /lib/
 .env
