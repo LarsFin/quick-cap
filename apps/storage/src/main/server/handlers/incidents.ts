@@ -1,6 +1,7 @@
 import { Request, Response, Router, RequestHandler } from "express";
 
 import { AppDependencies } from "..";
+import { ZodError } from "zod";
 
 export const initialiseGetAllIncidentsHandler = ({
   incidents,
@@ -8,7 +9,7 @@ export const initialiseGetAllIncidentsHandler = ({
   return async (_: Request, res: Response) => {
     const query = await incidents.getAll();
 
-    // TODO: handle other error types outside of just zod
+    // either a zod error or a db error, either are 500 errors on the server
     if (query.err !== null) {
       res.status(500).json({ error: "Internal server error" });
       return;
@@ -31,7 +32,7 @@ export const initialiseGetIncidentHandler = ({
 
     const query = await incidents.get(id);
 
-    // TODO: handle other error types outside of just zod
+    // either a zod error or a db error, either are 500 errors on the server
     if (query.err !== null) {
       res.status(500).json({ error: "Internal server error" });
       return;
@@ -52,9 +53,15 @@ export const initialiseCreateIncidentHandler = ({
   return async (req: Request, res: Response) => {
     const query = await incidents.create(req.body);
 
-    // TODO: handle other error types outside of just zod
     if (query.err !== null) {
-      res.status(400).json({ error: query.err });
+      // a zod error stems from the client sending bad data
+      if (query.err instanceof ZodError) {
+        res.status(400).json({ error: query.err.message });
+        return;
+      }
+
+      // a db error stems from the server
+      res.status(500).json({ error: "Internal server error" });
       return;
     }
 

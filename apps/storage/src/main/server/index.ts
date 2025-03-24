@@ -20,7 +20,7 @@ const initialiseDependencies = (config: Config): AppDependencies => {
   // currently tying instantiation to prisma
   const db = initPrismaDb();
 
-  const incidents = new Incidents(db);
+  const incidents = new Incidents(db, logger);
 
   return { config, incidents, logger };
 };
