@@ -1,10 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 
 import { CreateIncident, ReadIncident } from "../services/incidents";
+import { ensureError } from "../utils/ensureError";
+import { err, PromisedResult, res } from "../utils/result";
 
 import { Db, DbError } from ".";
-import { err, PromisedResult, res } from "../utils/result";
-import { ensureError } from "../utils/ensureError";
+
 
 export class PrismaDb implements Db {
   constructor(private readonly client: PrismaClient) {}

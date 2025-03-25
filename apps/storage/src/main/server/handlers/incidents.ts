@@ -1,7 +1,7 @@
 import { Request, Response, Router, RequestHandler } from "express";
+import { ZodError } from "zod";
 
 import { AppDependencies } from "..";
-import { ZodError } from "zod";
 
 export const initialiseGetAllIncidentsHandler = ({
   incidents,

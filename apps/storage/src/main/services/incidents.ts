@@ -1,15 +1,8 @@
 import { z, ZodError } from "zod";
 
 import { Db, DbError } from "../db";
-import {
-  err,
-  ok,
-  PromisedQuery,
-  PromisedResult,
-  Query,
-  res,
-} from "../utils/result";
 import { Logger } from "../utils/logger";
+import { err, ok, PromisedQuery, PromisedResult, res } from "../utils/result";
 
 const readIncidentSchema = z.strictObject({
   id: z.number(),
