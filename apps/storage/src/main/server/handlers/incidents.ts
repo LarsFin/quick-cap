@@ -69,6 +69,29 @@ export const initialiseCreateIncidentHandler = ({
   };
 };
 
+export const initialiseDeleteIncidentHandler = ({
+  incidents,
+}: AppDependencies): RequestHandler => {
+  return async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid incident ID" });
+      return;
+    }
+
+    const err = await incidents.delete(id);
+
+    if (err !== null) {
+      res.status(500).json({ error: "Internal server error" });
+      return;
+    }
+
+    // prioritising idempotency, don't care if the request didn't actually delete anything
+    res.status(204).send();
+  };
+};
+
 export const initialiseIncidentsHandlers = (
   router: Router,
   dependencies: AppDependencies
@@ -76,4 +99,8 @@ export const initialiseIncidentsHandlers = (
   router.get("/incidents", initialiseGetAllIncidentsHandler(dependencies));
   router.get("/incidents/:id", initialiseGetIncidentHandler(dependencies));
   router.post("/incidents", initialiseCreateIncidentHandler(dependencies));
+  router.delete(
+    "/incidents/:id",
+    initialiseDeleteIncidentHandler(dependencies)
+  );
 };

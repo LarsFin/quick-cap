@@ -34,6 +34,12 @@ export class PrismaDb implements Db {
     );
   }
 
+  public async deleteIncident(id: number): PromisedResult<void, DbError> {
+    return this.handleSafely(async () => {
+      await this.client.incident.delete({ where: { id } });
+    }, "There was a Prisma Error when deleting an incident");
+  }
+
   private async handleSafely<T>(
     fn: () => Promise<T>,
     errorMessage: string

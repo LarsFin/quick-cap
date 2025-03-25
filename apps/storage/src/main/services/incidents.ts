@@ -1,7 +1,14 @@
 import { z, ZodError } from "zod";
 
 import { Db, DbError } from "../db";
-import { err, PromisedResult, res } from "../utils/result";
+import {
+  err,
+  ok,
+  PromisedQuery,
+  PromisedResult,
+  Query,
+  res,
+} from "../utils/result";
 import { Logger } from "../utils/logger";
 
 const readIncidentSchema = z.strictObject({
@@ -28,18 +35,18 @@ export class Incidents {
   ) {}
 
   public async get(id: number): PromisedResult<ReadIncident | null, Error> {
-    const incident = await this.db.getIncident(id);
+    const incidentQuery = await this.db.getIncident(id);
 
-    if (incident.err !== null) {
-      this.logger.error("Error getting incident", incident.err);
-      return err(incident.err);
+    if (incidentQuery.err !== null) {
+      this.logger.error("Error getting incident", incidentQuery.err);
+      return err(incidentQuery.err);
     }
 
-    if (incident.data === null) {
+    if (incidentQuery.data === null) {
       return res(null);
     }
 
-    const parsed = readIncidentSchema.safeParse(incident);
+    const parsed = readIncidentSchema.safeParse(incidentQuery.data);
 
     if (!parsed.success) {
       this.logger.error("Corrupted incident data in database", parsed.error);
@@ -50,14 +57,17 @@ export class Incidents {
   }
 
   public async getAll(): PromisedResult<ReadIncident[], Error> {
-    const incidents = await this.db.getIncidents();
+    const incidentsQuery = await this.db.getIncidents();
 
-    if (incidents.err !== null) {
-      this.logger.error("Error getting incidents from database", incidents.err);
-      return err(incidents.err);
+    if (incidentsQuery.err !== null) {
+      this.logger.error(
+        "Error getting incidents from database",
+        incidentsQuery.err
+      );
+      return err(incidentsQuery.err);
     }
 
-    for (const incident of incidents.data) {
+    for (const incident of incidentsQuery.data) {
       const parsed = readIncidentSchema.safeParse(incident);
 
       if (!parsed.success) {
@@ -66,7 +76,7 @@ export class Incidents {
       }
     }
 
-    return res(incidents.data);
+    return res(incidentsQuery.data);
   }
 
   public async create(
@@ -87,5 +97,16 @@ export class Incidents {
     }
 
     return res(readIncidentSchema.parse(incident.data));
+  }
+
+  public async delete(id: number): PromisedQuery<DbError> {
+    const result = await this.db.deleteIncident(id);
+
+    if (result.err !== null) {
+      this.logger.error("Error deleting incident from database", result.err);
+      return result.err;
+    }
+
+    return ok();
   }
 }

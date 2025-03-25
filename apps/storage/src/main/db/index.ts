@@ -7,6 +7,7 @@ export interface Db {
   createIncident(
     incident: CreateIncident
   ): PromisedResult<ReadIncident, DbError>;
+  deleteIncident(id: number): PromisedResult<void, DbError>;
 }
 
 export class DbError extends Error {
