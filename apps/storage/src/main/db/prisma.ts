@@ -1,11 +1,15 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
-import { CreateIncident, ReadIncident } from "../services/incidents";
+import {
+  CreateIncident,
+  PatchIncident,
+  ReadIncident,
+} from "../services/incidents";
 import { ensureError } from "../utils/ensureError";
 import { err, PromisedResult, res } from "../utils/result";
 
 import { Db, DbError } from ".";
-
 
 export class PrismaDb implements Db {
   constructor(private readonly client: PrismaClient) {}
@@ -33,6 +37,29 @@ export class PrismaDb implements Db {
       async () => await this.client.incident.create({ data: incident }),
       "There was a Prisma Error when creating an incident"
     );
+  }
+
+  public async updateIncident(
+    id: number,
+    incident: PatchIncident
+  ): PromisedResult<ReadIncident | null, DbError> {
+    return this.handleSafely(async () => {
+      try {
+        return await this.client.incident.update({
+          where: { id },
+          data: incident,
+        });
+      } catch (err) {
+        if (err instanceof PrismaClientKnownRequestError) {
+          // this indicates that the incident was not found
+          if (err.code === "P2025") {
+            return null;
+          }
+        }
+
+        throw err;
+      }
+    }, "There was a Prisma Error when updating an incident");
   }
 
   public async deleteIncident(id: number): PromisedResult<void, DbError> {

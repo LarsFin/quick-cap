@@ -21,6 +21,13 @@ const createIncidentSchema = z.strictObject({
 });
 export type CreateIncident = z.infer<typeof createIncidentSchema>;
 
+const patchIncidentSchema = z.strictObject({
+  name: z.string().optional(),
+  description: z.string().nullable().optional(),
+  status: z.string().optional(),
+});
+export type PatchIncident = z.infer<typeof patchIncidentSchema>;
+
 export class Incidents {
   constructor(
     private readonly db: Db,
@@ -87,6 +94,31 @@ export class Incidents {
     if (incident.err !== null) {
       this.logger.error("Error creating incident in database", incident.err);
       return err(incident.err);
+    }
+
+    return res(readIncidentSchema.parse(incident.data));
+  }
+
+  public async patch(
+    id: number,
+    payload: unknown
+  ): PromisedResult<ReadIncident | null, ZodError | DbError> {
+    const parsed = patchIncidentSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      this.logger.debug("Invalid payload", parsed.error);
+      return err(parsed.error);
+    }
+
+    const incident = await this.db.updateIncident(id, parsed.data);
+
+    if (incident.err !== null) {
+      this.logger.error("Error updating incident in database", incident.err);
+      return err(incident.err);
+    }
+
+    if (incident.data === null) {
+      return res(null);
     }
 
     return res(readIncidentSchema.parse(incident.data));

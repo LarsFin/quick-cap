@@ -1,4 +1,8 @@
-import { CreateIncident, ReadIncident } from "../services/incidents";
+import {
+  CreateIncident,
+  PatchIncident,
+  ReadIncident,
+} from "../services/incidents";
 import { PromisedResult } from "../utils/result";
 
 export interface Db {
@@ -7,6 +11,10 @@ export interface Db {
   createIncident(
     incident: CreateIncident
   ): PromisedResult<ReadIncident, DbError>;
+  updateIncident(
+    id: number,
+    incident: PatchIncident
+  ): PromisedResult<ReadIncident | null, DbError>;
   deleteIncident(id: number): PromisedResult<void, DbError>;
 }
 
