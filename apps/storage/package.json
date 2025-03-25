@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "Service responsible for data management, a thin API layer sits above the integrated database, using an ORM to allow for dynamic database integration.",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project tsconfig.build.json",
     "dev": "ts-node-dev --respawn --transpile-only src/main/index.ts",
     "dev:migrate": "prisma migrate dev",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "start": "node build/main/index.js",
+    "start": "node build/index.js",
     "test": "jest"
   },
   "author": "LarsFin",
