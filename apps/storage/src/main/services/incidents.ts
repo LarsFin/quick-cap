@@ -10,21 +10,21 @@ const readIncidentSchema = z.strictObject({
   updatedAt: z.date(),
   name: z.string(),
   description: z.string().nullable(),
-  status: z.string(),
+  status: z.enum(["open", "closed"]),
 });
 export type ReadIncident = z.infer<typeof readIncidentSchema>;
 
 const createIncidentSchema = z.strictObject({
   name: z.string(),
   description: z.string().nullable(),
-  status: z.string(),
+  status: z.enum(["open", "closed"]),
 });
 export type CreateIncident = z.infer<typeof createIncidentSchema>;
 
 const patchIncidentSchema = z.strictObject({
   name: z.string().optional(),
   description: z.string().nullable().optional(),
-  status: z.string().optional(),
+  status: z.enum(["open", "closed"]).optional(),
 });
 export type PatchIncident = z.infer<typeof patchIncidentSchema>;
 
@@ -125,11 +125,11 @@ export class Incidents {
   }
 
   public async delete(id: number): PromisedQuery<DbError> {
-    const result = await this.db.deleteIncident(id);
+    const err = await this.db.deleteIncident(id);
 
-    if (result.err !== null) {
-      this.logger.error("Error deleting incident from database", result.err);
-      return result.err;
+    if (err !== null) {
+      this.logger.error("Error deleting incident from database", err);
+      return err;
     }
 
     return ok();

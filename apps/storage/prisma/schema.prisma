@@ -9,7 +9,12 @@ model Incident {
   updatedAt DateTime @updatedAt
   name String
   description String?
-  status String
+  status IncidentStatus @default(open)
+}
+
+enum IncidentStatus {
+  open
+  closed
 }
 
 generator client {

@@ -280,10 +280,9 @@ describe("PrismaDb", () => {
         });
 
       // Act
-      const { data, err } = await subject.deleteIncident(1);
+      const err = await subject.deleteIncident(1);
 
       // Assert
-      expect(data).toBeUndefined();
       expect(err).toBeNull();
     });
 
@@ -295,10 +294,9 @@ describe("PrismaDb", () => {
         .mockRejectedValue(rootError);
 
       // Act
-      const { data, err } = await subject.deleteIncident(1);
+      const err = await subject.deleteIncident(1);
 
       // Assert
-      expect(data).toBeNull();
       expect(err).toBeInstanceOf(DbError);
       expect(err?.rootError).toEqual(rootError);
     });

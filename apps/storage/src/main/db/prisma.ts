@@ -7,7 +7,7 @@ import {
   ReadIncident,
 } from "../services/incidents";
 import { ensureError } from "../utils/ensureError";
-import { err, PromisedResult, res } from "../utils/result";
+import { err, PromisedResult, res, PromisedQuery } from "../utils/result";
 
 import { Db, DbError } from ".";
 
@@ -62,10 +62,12 @@ export class PrismaDb implements Db {
     }, "There was a Prisma Error when updating an incident");
   }
 
-  public async deleteIncident(id: number): PromisedResult<void, DbError> {
-    return this.handleSafely(async () => {
+  public async deleteIncident(id: number): PromisedQuery<DbError> {
+    const result = await this.handleSafely(async () => {
       await this.client.incident.delete({ where: { id } });
     }, "There was a Prisma Error when deleting an incident");
+
+    return result.err;
   }
 
   private async handleSafely<T>(

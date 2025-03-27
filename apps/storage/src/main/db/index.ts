@@ -3,7 +3,7 @@ import {
   PatchIncident,
   ReadIncident,
 } from "../services/incidents";
-import { PromisedResult } from "../utils/result";
+import { PromisedResult, PromisedQuery } from "../utils/result";
 
 export interface Db {
   getIncidents(): PromisedResult<ReadIncident[], DbError>;
@@ -15,7 +15,7 @@ export interface Db {
     id: number,
     incident: PatchIncident
   ): PromisedResult<ReadIncident | null, DbError>;
-  deleteIncident(id: number): PromisedResult<void, DbError>;
+  deleteIncident(id: number): PromisedQuery<DbError>;
 }
 
 export class DbError extends Error {
