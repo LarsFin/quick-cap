@@ -83,9 +83,9 @@ export class PrismaDb implements Db {
   }
 }
 
-export const initPrismaDb = (): Db => {
+export const initPrismaDb = (url: string): Db => {
   // Prisma doesn't fail on client instantiation, but it does when actually
   // making a connection for queries to the database
-  const client = new PrismaClient();
+  const client = new PrismaClient({ datasources: { db: { url } } });
   return new PrismaDb(client);
 };

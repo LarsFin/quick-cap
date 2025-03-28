@@ -1,9 +1,15 @@
 import dotenv from "dotenv";
 
-import { start } from "./server";
+import { createApp, initialiseDependencies, startApp } from "./server";
 
 // load env variables
 dotenv.config();
 
+// initialise dependencies
+const deps = initialiseDependencies();
+
+// instrument app with routes
+const app = createApp(deps);
+
 // start server
-start();
+startApp(app, deps);

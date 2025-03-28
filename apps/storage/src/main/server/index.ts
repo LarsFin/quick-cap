@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Express } from "express";
 
 import { initPrismaDb } from "../db/prisma";
 import { Incidents } from "../services/incidents";
@@ -14,52 +14,46 @@ export type AppDependencies = {
   logger: Logger;
 };
 
-const initialiseDependencies = (config: Config): AppDependencies => {
+export const initialiseDependencies = (): AppDependencies => {
+  const rawConfig = loadConfig(process.env);
+
+  if (rawConfig.err) {
+    console.error(rawConfig.err);
+    process.exit(1);
+  }
+
+  const config = rawConfig.data;
   const logger = resolveLogger(config);
 
   // currently tying instantiation to prisma
-  const db = initPrismaDb();
+  const db = initPrismaDb(config.DATABASE_URL);
 
   const incidents = new Incidents(db, logger);
 
   return { config, incidents, logger };
 };
 
-const initialiseRouter = (dependencies: AppDependencies) => {
-  const router = express.Router();
-
-  if (!dependencies.config.__DEV__) {
-    router.use(challengeBearerToken(dependencies.config.API_TOKEN));
-  } else {
-    dependencies.logger.warning(
-      "Running in dev mode, skipping auth middleware"
-    );
-  }
-
-  initialiseIncidentsHandlers(router, dependencies);
-
-  return router;
-};
-
-export const start = () => {
-  // load config object from environment
-  const config = loadConfig(process.env);
-
-  if (config.err) {
-    console.error(config.err);
-    process.exit(1);
-  }
-
+export const createApp = (deps: AppDependencies): Express => {
   const app = express();
   app.use(express.json());
 
-  const dependencies = initialiseDependencies(config.data);
+  const router = express.Router();
 
-  const router = initialiseRouter(dependencies);
+  if (!deps.config.__DEV__) {
+    router.use(challengeBearerToken(deps.config.API_TOKEN));
+  } else {
+    deps.logger.warning("Running in dev mode, skipping auth middleware");
+  }
+
+  initialiseIncidentsHandlers(router, deps);
 
   app.use("/api/v1", router);
 
-  app.listen(config.data.PORT, () => {
-    dependencies.logger.info(`Server is running on port ${config.data.PORT}`);
+  return app;
+};
+
+export const startApp = (app: Express, deps: AppDependencies) => {
+  app.listen(deps.config.PORT, () => {
+    deps.logger.info(`Server is running on port ${deps.config.PORT}`);
   });
 };
