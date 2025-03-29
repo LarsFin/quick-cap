@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "dev": "ts-node-dev --respawn --transpile-only src/main/index.ts",
+    "dev:generate": "prisma generate",
     "dev:migrate": "prisma migrate dev",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",

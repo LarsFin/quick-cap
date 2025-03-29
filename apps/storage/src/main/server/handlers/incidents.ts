@@ -65,7 +65,7 @@ export const initialiseCreateIncidentHandler = ({
       return;
     }
 
-    res.json(query.data);
+    res.status(201).json(query.data);
   };
 };
 
