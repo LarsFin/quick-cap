@@ -1,14 +1,14 @@
 import { PrismaClient } from "@prisma/client";
-import { when } from "jest-when";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { when } from "jest-when";
 
+import { DbError } from "../../../main/db";
 import { PrismaDb } from "../../../main/db/prisma";
 import {
   ReadIncident,
   CreateIncident,
   PatchIncident,
 } from "../../../main/services/incidents";
-import { DbError } from "../../../main/db";
 
 describe("PrismaDb", () => {
   let subject: PrismaDb;

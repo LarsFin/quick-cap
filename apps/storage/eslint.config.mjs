@@ -6,12 +6,12 @@ import prettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default [
-  eslint.configs.recommended,
   {
-    ignores: ['build/**/*']
+    ignores: ['**/build/**']
   },
   {
-    files: ['**/*.ts', '**/*.tsx'],
+    files: ['src/**/*.ts'],
+    ...eslint.configs.recommended,
     languageOptions: {
       parser: tseslintParser,
       parserOptions: {
@@ -20,6 +20,7 @@ export default [
       },
       globals: {
         ...globals.node,
+        ...globals.jest,
       },
     },
     plugins: {
@@ -36,11 +37,11 @@ export default [
     rules: {
       // TypeScript rules
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-unused-vars': ['warn', { 
+      '@typescript-eslint/no-unused-vars': ['error', { 
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_'
       }],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
 
       // Import rules
       'import/order': [

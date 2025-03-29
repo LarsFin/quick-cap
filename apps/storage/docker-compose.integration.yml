@@ -1,0 +1,11 @@
+name: storage-integration-tests
+
+services:
+  postgres:
+    image: postgres:17.4
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: integration
+      POSTGRES_DB: base
+    ports:
+      - 5433:5432

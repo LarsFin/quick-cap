@@ -2,7 +2,7 @@ import express, { Express } from "express";
 
 import { initPrismaDb } from "../db/prisma";
 import { Incidents } from "../services/incidents";
-import { Config, loadConfig } from "../utils/config";
+import { Config } from "../utils/config";
 import { Logger, resolveLogger } from "../utils/logger";
 
 import { initialiseIncidentsHandlers } from "./handlers/incidents";
@@ -14,15 +14,7 @@ export type AppDependencies = {
   logger: Logger;
 };
 
-export const initialiseDependencies = (): AppDependencies => {
-  const rawConfig = loadConfig(process.env);
-
-  if (rawConfig.err) {
-    console.error(rawConfig.err);
-    process.exit(1);
-  }
-
-  const config = rawConfig.data;
+export const initialiseDependencies = (config: Config): AppDependencies => {
   const logger = resolveLogger(config);
 
   // currently tying instantiation to prisma

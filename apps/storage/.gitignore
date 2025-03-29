@@ -38,8 +38,9 @@ tests/cases/**/*.js.map
 scripts/eslint/built/
 scripts/debug.bat
 scripts/run.bat
-scripts/**/*.js
+# Only ignore compiled JS files in scripts
 scripts/**/*.js.map
+scripts/**/dist/**/*.js
 coverage/
 internal/
 **/.DS_Store

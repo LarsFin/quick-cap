@@ -1,5 +1,7 @@
 import { when } from "jest-when";
-import { Db } from "../../../main/db";
+import { ZodError } from "zod";
+
+import { Db , DbError } from "../../../main/db";
 import {
   Incidents,
   ReadIncident,
@@ -7,8 +9,7 @@ import {
   PatchIncident,
 } from "../../../main/services/incidents";
 import { Logger } from "../../../main/utils/logger";
-import { DbError } from "../../../main/db";
-import { ZodError } from "zod";
+
 
 describe("Incidents", () => {
   let subject: Incidents;
