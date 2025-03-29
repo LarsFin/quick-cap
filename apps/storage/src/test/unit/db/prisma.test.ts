@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { when } from "jest-when";
 
-import { DbError } from "../../../main/db";
+import { MissingResourceError, UnknownDbError } from "../../../main/db";
 import { PrismaDb } from "../../../main/db/prisma";
 import {
   ReadIncident,
@@ -74,7 +74,7 @@ describe("PrismaDb", () => {
 
         // Assert
         expect(data).toBeNull();
-        expect(err).toBeInstanceOf(DbError);
+        expect(err).toBeInstanceOf(UnknownDbError);
         expect(err?.rootError).toEqual(rootError);
       });
     });
@@ -130,7 +130,7 @@ describe("PrismaDb", () => {
 
       // Assert
       expect(data).toBeNull();
-      expect(err).toBeInstanceOf(DbError);
+      expect(err).toBeInstanceOf(UnknownDbError);
       expect(err?.rootError).toEqual(rootError);
     });
   });
@@ -179,7 +179,7 @@ describe("PrismaDb", () => {
 
       // Assert
       expect(data).toBeNull();
-      expect(err).toBeInstanceOf(DbError);
+      expect(err).toBeInstanceOf(UnknownDbError);
       expect(err?.rootError).toEqual(rootError);
     });
   });
@@ -215,30 +215,31 @@ describe("PrismaDb", () => {
       expect(err).toBeNull();
     });
 
-    it("should return null when incident not found", async () => {
+    it("should return a MissingResourceError when incident not found", async () => {
       // Arrange
       const updateData: PatchIncident = {
         name: "Updated Name",
         status: "closed",
       };
-      const notFoundError = new PrismaClientKnownRequestError(
-        "Record to update not found.",
-        { code: "P2025", clientVersion: "5.0.0" }
-      );
 
       when(mockPrismaClient.incident.update)
         .calledWith({
           where: { id: 1 },
           data: updateData,
         })
-        .mockRejectedValue(notFoundError);
+        .mockRejectedValue(
+          new PrismaClientKnownRequestError("Record to update not found.", {
+            code: "P2025",
+            clientVersion: "5.0.0",
+          })
+        );
 
       // Act
       const { data, err } = await subject.updateIncident(1, updateData);
 
       // Assert
       expect(data).toBeNull();
-      expect(err).toBeNull();
+      expect(err).toBeInstanceOf(MissingResourceError);
     });
 
     it("should return a DbError when update fails for other reasons", async () => {
@@ -260,7 +261,7 @@ describe("PrismaDb", () => {
 
       // Assert
       expect(data).toBeNull();
-      expect(err).toBeInstanceOf(DbError);
+      expect(err).toBeInstanceOf(UnknownDbError);
       expect(err?.rootError).toEqual(rootError);
     });
   });
@@ -286,6 +287,24 @@ describe("PrismaDb", () => {
       expect(err).toBeNull();
     });
 
+    it("should return a MissingResourceError when incident not found", async () => {
+      // Arrange
+      when(mockPrismaClient.incident.delete)
+        .calledWith({ where: { id: 1 } })
+        .mockRejectedValue(
+          new PrismaClientKnownRequestError("Record to delete not found.", {
+            code: "P2025",
+            clientVersion: "5.0.0",
+          })
+        );
+
+      // Act
+      const err = await subject.deleteIncident(1);
+
+      // Assert
+      expect(err).toBeInstanceOf(MissingResourceError);
+    });
+
     it("should return a DbError when deletion fails", async () => {
       // Arrange
       const rootError = new Error("Deletion failed");
@@ -297,7 +316,7 @@ describe("PrismaDb", () => {
       const err = await subject.deleteIncident(1);
 
       // Assert
-      expect(err).toBeInstanceOf(DbError);
+      expect(err).toBeInstanceOf(UnknownDbError);
       expect(err?.rootError).toEqual(rootError);
     });
   });

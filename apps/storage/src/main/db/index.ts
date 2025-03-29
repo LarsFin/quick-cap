@@ -6,19 +6,19 @@ import {
 import { PromisedResult, PromisedQuery } from "../utils/result";
 
 export interface Db {
-  getIncidents(): PromisedResult<ReadIncident[], DbError>;
-  getIncident(id: number): PromisedResult<ReadIncident | null, DbError>;
+  getIncidents(): PromisedResult<ReadIncident[], UnknownDbError>;
+  getIncident(id: number): PromisedResult<ReadIncident | null, UnknownDbError>;
   createIncident(
     incident: CreateIncident
-  ): PromisedResult<ReadIncident, DbError>;
+  ): PromisedResult<ReadIncident, UnknownDbError>;
   updateIncident(
     id: number,
     incident: PatchIncident
-  ): PromisedResult<ReadIncident | null, DbError>;
-  deleteIncident(id: number): PromisedQuery<DbError>;
+  ): PromisedResult<ReadIncident | null, UnknownDbError>;
+  deleteIncident(id: number): PromisedQuery<UnknownDbError>;
 }
 
-export class DbError extends Error {
+export class UnknownDbError extends Error {
   constructor(
     message: string,
     public readonly rootError?: Error
@@ -27,3 +27,5 @@ export class DbError extends Error {
     this.name = "DbError";
   }
 }
+
+export class MissingResourceError extends UnknownDbError {}

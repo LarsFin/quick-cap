@@ -9,12 +9,12 @@ import {
 import { ensureError } from "../utils/ensureError";
 import { err, PromisedResult, res, PromisedQuery } from "../utils/result";
 
-import { Db, DbError } from ".";
+import { Db, UnknownDbError, MissingResourceError } from ".";
 
 export class PrismaDb implements Db {
   constructor(private readonly client: PrismaClient) {}
 
-  public async getIncidents(): PromisedResult<ReadIncident[], DbError> {
+  public async getIncidents(): PromisedResult<ReadIncident[], UnknownDbError> {
     return this.handleSafely(
       async () => await this.client.incident.findMany(),
       "There was a Prisma Error when getting incidents"
@@ -23,7 +23,7 @@ export class PrismaDb implements Db {
 
   public async getIncident(
     id: number
-  ): PromisedResult<ReadIncident | null, DbError> {
+  ): PromisedResult<ReadIncident | null, UnknownDbError> {
     return this.handleSafely(
       async () => await this.client.incident.findUnique({ where: { id } }),
       "There was a Prisma Error when getting an incident"
@@ -32,7 +32,7 @@ export class PrismaDb implements Db {
 
   public async createIncident(
     incident: CreateIncident
-  ): PromisedResult<ReadIncident, DbError> {
+  ): PromisedResult<ReadIncident, UnknownDbError> {
     return this.handleSafely(
       async () => await this.client.incident.create({ data: incident }),
       "There was a Prisma Error when creating an incident"
@@ -42,27 +42,18 @@ export class PrismaDb implements Db {
   public async updateIncident(
     id: number,
     incident: PatchIncident
-  ): PromisedResult<ReadIncident | null, DbError> {
-    return this.handleSafely(async () => {
-      try {
-        return await this.client.incident.update({
+  ): PromisedResult<ReadIncident | null, UnknownDbError> {
+    return this.handleSafely(
+      async () =>
+        await this.client.incident.update({
           where: { id },
           data: incident,
-        });
-      } catch (err) {
-        if (err instanceof PrismaClientKnownRequestError) {
-          // this indicates that the incident was not found
-          if (err.code === "P2025") {
-            return null;
-          }
-        }
-
-        throw err;
-      }
-    }, "There was a Prisma Error when updating an incident");
+        }),
+      "There was a Prisma Error when updating an incident"
+    );
   }
 
-  public async deleteIncident(id: number): PromisedQuery<DbError> {
+  public async deleteIncident(id: number): PromisedQuery<UnknownDbError> {
     const result = await this.handleSafely(async () => {
       await this.client.incident.delete({ where: { id } });
     }, "There was a Prisma Error when deleting an incident");
@@ -73,12 +64,20 @@ export class PrismaDb implements Db {
   private async handleSafely<T>(
     fn: () => Promise<T>,
     errorMessage: string
-  ): PromisedResult<T, DbError> {
+  ): PromisedResult<T, UnknownDbError> {
     try {
       return res(await fn());
     } catch (error) {
       const rootError = ensureError(error);
-      return err(new DbError(errorMessage, rootError));
+
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return err(new MissingResourceError(errorMessage, rootError));
+      }
+
+      return err(new UnknownDbError(errorMessage, rootError));
     }
   }
 }

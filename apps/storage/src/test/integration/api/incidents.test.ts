@@ -42,6 +42,13 @@ describe("Incidents", () => {
       const response = await request(app).get("/api/v1/incidents");
       expect(response.status).toBe(401);
     });
+
+    it("should return 401 if invalid token is provided", async () => {
+      const response = await request(app)
+        .get("/api/v1/incidents")
+        .set("Authorization", "Bearer invalid-token");
+      expect(response.status).toBe(401);
+    });
   });
 
   describe("GET /api/v1/incidents/:id", () => {
@@ -57,85 +64,171 @@ describe("Incidents", () => {
       });
     });
 
-    it("should return 401 if no token is provided", async () => {
-      const response = await request(app).get("/api/v1/incidents/1");
-      expect(response.status).toBe(401);
-    });
-
-    it("should return 404 if the incident does not exist", async () => {
+    it("should return 404 if incident not found", async () => {
       const response = await request(app)
         .get("/api/v1/incidents/999")
         .set("Authorization", `Bearer ${config.API_TOKEN}`);
 
       expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: "Incident not found" });
+    });
+
+    it("should return 400 if invalid id is provided", async () => {
+      const response = await request(app)
+        .get("/api/v1/incidents/invalid-id")
+        .set("Authorization", `Bearer ${config.API_TOKEN}`);
+
+      expect(response.status).toBe(400);
+    });
+
+    it("should return 401 if no token is provided", async () => {
+      const response = await request(app).get("/api/v1/incidents/1");
+      expect(response.status).toBe(401);
     });
   });
 
   describe("POST /api/v1/incidents", () => {
     it("should create a new incident", async () => {
+      const newIncident = {
+        name: "New Incident",
+        description: "Test Description",
+        status: "open",
+      };
+
       const response = await request(app)
         .post("/api/v1/incidents")
         .set("Authorization", `Bearer ${config.API_TOKEN}`)
-        .send({
-          name: "New Incident",
-          description: "This is a new incident",
-          status: "open",
-        });
+        .send(newIncident);
 
       expect(response.status).toBe(201);
-      expect(response.body).toMatchObject({
-        id: 3,
-        name: "New Incident",
-        description: "This is a new incident",
-        status: "open",
-      });
+      expect(response.body).toMatchObject(newIncident);
+      expect(response.body).toHaveProperty("id");
+      expect(response.body).toHaveProperty("createdAt");
+      expect(response.body).toHaveProperty("updatedAt");
 
       const incident = await prisma.incident.findUnique({
-        where: { id: 3 },
+        where: { id: response.body.id },
       });
 
       expect(incident).not.toBeNull();
-      expect(incident?.name).toBe("New Incident");
-      expect(incident?.description).toBe("This is a new incident");
+      expect(incident?.name).toBe(newIncident.name);
+      expect(incident?.description).toBe(newIncident.description);
+    });
+
+    it("should return 400 if invalid data is provided", async () => {
+      const invalidIncident = {
+        name: 123, // Should be string
+        description: "Test Description",
+        status: "invalid-status", // Invalid status
+      };
+
+      const response = await request(app)
+        .post("/api/v1/incidents")
+        .set("Authorization", `Bearer ${config.API_TOKEN}`)
+        .send(invalidIncident);
+
+      expect(response.status).toBe(400);
+    });
+
+    it("should return 401 if no token is provided", async () => {
+      const response = await request(app).post("/api/v1/incidents").send({
+        name: "New Incident",
+        description: "Test Description",
+        status: "open",
+      });
+
+      expect(response.status).toBe(401);
     });
   });
 
   describe("PATCH /api/v1/incidents/:id", () => {
-    it("should update the incident with the given id", async () => {
+    it("should update an existing incident", async () => {
+      const updateData = {
+        name: "Updated Name",
+        status: "closed",
+      };
+
       const response = await request(app)
         .patch("/api/v1/incidents/1")
         .set("Authorization", `Bearer ${config.API_TOKEN}`)
-        .send({
-          status: "closed",
-        });
+        .send(updateData);
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         id: 1,
+        ...updateData,
+      });
+    });
+
+    it("should return 404 if incident not found", async () => {
+      const response = await request(app)
+        .patch("/api/v1/incidents/999")
+        .set("Authorization", `Bearer ${config.API_TOKEN}`)
+        .send({
+          name: "Updated Name",
+          status: "closed",
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: "Incident not found" });
+    });
+
+    it("should return 400 if invalid data is provided", async () => {
+      const response = await request(app)
+        .patch("/api/v1/incidents/1")
+        .set("Authorization", `Bearer ${config.API_TOKEN}`)
+        .send({
+          status: "invalid-status",
+        });
+
+      expect(response.status).toBe(400);
+    });
+
+    it("should return 401 if no token is provided", async () => {
+      const response = await request(app).patch("/api/v1/incidents/1").send({
+        name: "Updated Name",
         status: "closed",
       });
 
-      const incident = await prisma.incident.findUnique({
-        where: { id: 1 },
-      });
-
-      expect(incident?.status).toBe("closed");
+      expect(response.status).toBe(401);
     });
   });
 
   describe("DELETE /api/v1/incidents/:id", () => {
-    it("should delete the incident with the given id", async () => {
+    it("should delete an existing incident", async () => {
       const response = await request(app)
         .delete("/api/v1/incidents/1")
         .set("Authorization", `Bearer ${config.API_TOKEN}`);
 
       expect(response.status).toBe(204);
 
-      const incident = await prisma.incident.findUnique({
-        where: { id: 1 },
-      });
+      // Verify the incident was deleted
+      const getResponse = await request(app)
+        .get("/api/v1/incidents/1")
+        .set("Authorization", `Bearer ${config.API_TOKEN}`);
 
-      expect(incident).toBeNull();
+      expect(getResponse.status).toBe(404);
+    });
+
+    it("should return 204 even if incident doesn't exist (idempotency)", async () => {
+      const response = await request(app)
+        .delete("/api/v1/incidents/999")
+        .set("Authorization", `Bearer ${config.API_TOKEN}`);
+
+      expect(response.status).toBe(204);
+    });
+
+    it("should return 400 if invalid id is provided", async () => {
+      const response = await request(app)
+        .delete("/api/v1/incidents/invalid-id")
+        .set("Authorization", `Bearer ${config.API_TOKEN}`);
+
+      expect(response.status).toBe(400);
+    });
+
+    it("should return 401 if no token is provided", async () => {
+      const response = await request(app).delete("/api/v1/incidents/1");
+      expect(response.status).toBe(401);
     });
   });
 });

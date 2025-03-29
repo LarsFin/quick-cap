@@ -1,7 +1,7 @@
 import { when } from "jest-when";
 import { ZodError } from "zod";
 
-import { Db , DbError } from "../../../main/db";
+import { Db, MissingResourceError, UnknownDbError } from "../../../main/db";
 import {
   Incidents,
   ReadIncident,
@@ -9,7 +9,6 @@ import {
   PatchIncident,
 } from "../../../main/services/incidents";
 import { Logger } from "../../../main/utils/logger";
-
 
 describe("Incidents", () => {
   let subject: Incidents;
@@ -79,7 +78,7 @@ describe("Incidents", () => {
 
     it("should return a DbError when database is unavailable", async () => {
       // Arrange
-      const dbError = new DbError("Database is unavailable");
+      const dbError = new UnknownDbError("Database is unavailable");
       when(mockDb.getIncident).calledWith(1).mockResolvedValue({
         data: null,
         err: dbError,
@@ -90,7 +89,7 @@ describe("Incidents", () => {
 
       // Assert
       expect(data).toBeNull();
-      expect(err).toBeInstanceOf(DbError);
+      expect(err).toBeInstanceOf(UnknownDbError);
       expect(err?.message).toBe("Database is unavailable");
     });
 
@@ -158,7 +157,7 @@ describe("Incidents", () => {
 
     it("should return a DbError when database is unavailable", async () => {
       // Arrange
-      const dbError = new DbError("Database is unavailable");
+      const dbError = new UnknownDbError("Database is unavailable");
       when(mockDb.getIncidents).mockResolvedValue({
         data: null,
         err: dbError,
@@ -169,7 +168,7 @@ describe("Incidents", () => {
 
       // Assert
       expect(data).toBeNull();
-      expect(err).toBeInstanceOf(DbError);
+      expect(err).toBeInstanceOf(UnknownDbError);
       expect(err?.message).toBe("Database is unavailable");
     });
 
@@ -253,7 +252,7 @@ describe("Incidents", () => {
         status: "open",
       };
 
-      const dbError = new DbError("Creation failed");
+      const dbError = new UnknownDbError("Creation failed");
       when(mockDb.createIncident).calledWith(newIncident).mockResolvedValue({
         data: null,
         err: dbError,
@@ -264,7 +263,7 @@ describe("Incidents", () => {
 
       // Assert
       expect(data).toBeNull();
-      expect(err).toBeInstanceOf(DbError);
+      expect(err).toBeInstanceOf(UnknownDbError);
       expect(err?.message).toBe("Creation failed");
     });
   });
@@ -306,10 +305,12 @@ describe("Incidents", () => {
         status: "closed",
       };
 
-      when(mockDb.updateIncident).calledWith(1, updateData).mockResolvedValue({
-        data: null,
-        err: null,
-      });
+      when(mockDb.updateIncident)
+        .calledWith(1, updateData)
+        .mockResolvedValue({
+          data: null,
+          err: new MissingResourceError("Incident not found"),
+        });
 
       // Act
       const { data, err } = await subject.patch(1, updateData);
@@ -341,7 +342,7 @@ describe("Incidents", () => {
         status: "closed",
       };
 
-      const dbError = new DbError("Update failed");
+      const dbError = new UnknownDbError("Update failed");
       when(mockDb.updateIncident).calledWith(1, updateData).mockResolvedValue({
         data: null,
         err: dbError,
@@ -352,7 +353,7 @@ describe("Incidents", () => {
 
       // Assert
       expect(data).toBeNull();
-      expect(err).toBeInstanceOf(DbError);
+      expect(err).toBeInstanceOf(UnknownDbError);
       expect(err?.message).toBe("Update failed");
     });
   });
@@ -363,23 +364,36 @@ describe("Incidents", () => {
       when(mockDb.deleteIncident).calledWith(1).mockResolvedValue(null);
 
       // Act
-      const result = await subject.delete(1);
+      const err = await subject.delete(1);
 
       // Assert
-      expect(result).toBeNull();
+      expect(err).toBeNull();
+    });
+
+    it("should return ok when missing resource", async () => {
+      // Arrange
+      when(mockDb.deleteIncident)
+        .calledWith(1)
+        .mockResolvedValue(new MissingResourceError("Incident not found"));
+
+      // Act
+      const err = await subject.delete(1);
+
+      // Assert
+      expect(err).toBeNull();
     });
 
     it("should return a DbError when deletion fails", async () => {
       // Arrange
-      const dbError = new DbError("Deletion failed");
+      const dbError = new UnknownDbError("Deletion failed");
       when(mockDb.deleteIncident).calledWith(1).mockResolvedValue(dbError);
 
       // Act
-      const result = await subject.delete(1);
+      const err = await subject.delete(1);
 
       // Assert
-      expect(result).toBeInstanceOf(DbError);
-      expect(result?.message).toBe("Deletion failed");
+      expect(err).toBeInstanceOf(UnknownDbError);
+      expect(err?.message).toBe("Deletion failed");
     });
   });
 });

@@ -1,6 +1,6 @@
 import { z, ZodError } from "zod";
 
-import { Db, DbError } from "../db";
+import { Db, MissingResourceError } from "../db";
 import { Logger } from "../utils/logger";
 import { err, ok, PromisedQuery, PromisedResult, res } from "../utils/result";
 
@@ -81,7 +81,7 @@ export class Incidents {
 
   public async create(
     payload: unknown
-  ): PromisedResult<ReadIncident, ZodError | DbError> {
+  ): PromisedResult<ReadIncident, ZodError | Error> {
     const parsed = createIncidentSchema.safeParse(payload);
 
     if (!parsed.success) {
@@ -102,7 +102,7 @@ export class Incidents {
   public async patch(
     id: number,
     payload: unknown
-  ): PromisedResult<ReadIncident | null, ZodError | DbError> {
+  ): PromisedResult<ReadIncident | null, ZodError | Error> {
     const parsed = patchIncidentSchema.safeParse(payload);
 
     if (!parsed.success) {
@@ -113,6 +113,10 @@ export class Incidents {
     const incident = await this.db.updateIncident(id, parsed.data);
 
     if (incident.err !== null) {
+      if (incident.err instanceof MissingResourceError) {
+        return res(null);
+      }
+
       this.logger.error("Error updating incident in database", incident.err);
       return err(incident.err);
     }
@@ -124,10 +128,14 @@ export class Incidents {
     return res(readIncidentSchema.parse(incident.data));
   }
 
-  public async delete(id: number): PromisedQuery<DbError> {
+  public async delete(id: number): PromisedQuery<Error> {
     const err = await this.db.deleteIncident(id);
 
     if (err !== null) {
+      if (err instanceof MissingResourceError) {
+        return ok();
+      }
+
       this.logger.error("Error deleting incident from database", err);
       return err;
     }
