@@ -8,10 +8,14 @@
     "dev:migrate": "prisma migrate dev",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
+    "seed": "prisma db seed",
     "start": "node build/index.js",
     "test": "npm run test:unit && npm run test:integration",
     "test:integration": "node scripts/run-integration-tests.js",
     "test:unit": "jest --config jest.config.unit.js"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "author": "LarsFin",
   "license": "ISC",

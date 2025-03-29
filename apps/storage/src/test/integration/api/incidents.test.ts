@@ -14,6 +14,8 @@ describe("Incidents", () => {
       const response = await request(testApp.app).get("/api/v1/incidents");
 
       expect(response.status).toBe(200);
+      expect(response.body).toBeInstanceOf(Array);
+      expect(response.body.length).toBe(2);
       expect(response.body).toMatchObject([
         {
           name: "Slow Response Times",

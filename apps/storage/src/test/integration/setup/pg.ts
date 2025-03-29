@@ -1,10 +1,6 @@
 /**
- * A file to help construct a database for integration tests. This file uses
- * a combination of Prisma and pg bindings to create a new database per test,
- * seed it with prisma calls and then destroy it after the test is done.
- *
- * This is to ensure we can run integration tests in parallel without inteferring
- * with each other. It's annoying that we have to bind to prisma and pg here
+ * A file to help create ethereal isolated test databases per test to avoid
+ * race conditions between tests.
  */
 
 import { Pool } from "pg";

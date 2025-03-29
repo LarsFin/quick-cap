@@ -8,7 +8,6 @@ import {
 import { Config } from "../../main/utils/config";
 
 import { createTestDatabase } from "./setup/pg";
-import { seedTestDatabase } from "./setup/seed";
 
 const baseTestDbUrl = "postgresql://test:integration@localhost:5433/base";
 
@@ -27,12 +26,11 @@ export type TestApp = {
 };
 
 /**
- * Creates and returns a test app as well as a function for tearing down unnecessary resources
+ * Creates a test app with a connection to an isolated test database to avoid
+ * race conditions between tests.
  */
 export const setup = async (): Promise<TestApp> => {
   const dbUrl = await createTestDatabase(baseTestDbUrl);
-
-  await seedTestDatabase(dbUrl);
 
   const deps = initialiseDependencies({
     ...testConfig,

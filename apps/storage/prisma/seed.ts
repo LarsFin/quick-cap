@@ -1,19 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 
-/**
- * This should be used to seed the base database so that any copies created for
- * isolated tests are created with the same data without having to run the seed
- * function again.
- */
-export const seedTestDatabase = async (dbUrl: string) => {
-  const prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: dbUrl,
-      },
-    },
-  });
+const prisma = new PrismaClient();
 
+export const main = async () => {
   await prisma.incident.createMany({
     data: [
       {
@@ -29,6 +18,16 @@ export const seedTestDatabase = async (dbUrl: string) => {
       },
     ],
   });
-
-  await prisma.$disconnect();
 };
+
+main()
+  .then(() => {
+    console.log("Database seeded successfully");
+    prisma.$disconnect();
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error(err);
+    prisma.$disconnect();
+    process.exit(1);
+  });
