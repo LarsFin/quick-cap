@@ -11,7 +11,9 @@ describe("Incidents", () => {
 
   describe("GET /api/v1/incidents", () => {
     it("should return all stored incidents", async () => {
-      const response = await request(testApp.app).get("/api/v1/incidents");
+      const response = await request(testApp.app)
+        .get("/api/v1/incidents")
+        .set("Authorization", `Bearer ${testApp.config.API_TOKEN}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toBeInstanceOf(Array);
@@ -29,6 +31,11 @@ describe("Incidents", () => {
           status: "open",
         },
       ]);
+    });
+
+    it("should return 401 if no token is provided", async () => {
+      const response = await request(testApp.app).get("/api/v1/incidents");
+      expect(response.status).toBe(401);
     });
   });
 });

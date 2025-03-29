@@ -70,10 +70,6 @@ const runIntegrationTests = async () => {
     console.log('Running integration tests...');
     await runCommand('npx', ['jest', '--config', 'jest.config.integration.js']);
 
-    // Stop test postgres instance
-    console.log('Cleaning up...');
-    await runCommand('docker', ['compose', '-f', dockerComposeFile, 'down']);
-
     console.log('Integration tests completed successfully!');
   } catch (error) {
     console.error('Integration tests failed:', error);
