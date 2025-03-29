@@ -1,0 +1,38 @@
+name: Storage CI
+
+on:
+  push:
+    paths:
+      - 'apps/storage/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/storage
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'apps/storage/.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'apps/storage/package-lock.json'
+
+      - name: Install dependencies
+        run: npm i
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run integration tests
+        run: npm run test:integration
