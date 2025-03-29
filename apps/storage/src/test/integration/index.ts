@@ -1,13 +1,10 @@
 import { Express } from "express";
 
-import {
-  createApp,
-  initialiseDependencies,
-  AppDependencies,
-} from "../../main/server";
+import { createApp, initialiseDependencies } from "../../main/server";
 import { Config } from "../../main/utils/config";
 
 import { createTestDatabase } from "./setup/pg";
+import { PrismaClient } from "@prisma/client";
 
 const baseTestDbUrl = "postgresql://test:integration@localhost:5433/base";
 
@@ -21,8 +18,7 @@ const testConfig: Config = {
 
 export type TestApp = {
   app: Express;
-  deps: AppDependencies;
-  dbUrl: string;
+  prisma: PrismaClient;
 };
 
 /**
@@ -30,16 +26,22 @@ export type TestApp = {
  * race conditions between tests.
  */
 export const setup = async (): Promise<TestApp> => {
-  const dbUrl = await createTestDatabase(baseTestDbUrl);
+  const etherealDbUrl = await createTestDatabase(baseTestDbUrl);
 
   const deps = initialiseDependencies({
     ...testConfig,
-    DATABASE_URL: dbUrl,
+    DATABASE_URL: etherealDbUrl,
   });
 
+  // we return a prisma client so tests can verify database state
   return {
     app: createApp(deps),
-    deps,
-    dbUrl,
+    prisma: new PrismaClient({
+      datasources: {
+        db: {
+          url: etherealDbUrl,
+        },
+      },
+    }),
   };
 };

@@ -1,6 +1,9 @@
 const { spawn } = require('child_process');
 const { Pool } = require('pg');
 
+const databaseUrl = process.env.DATABASE_URL || 'postgresql://test:integration@localhost:5433/base';
+const dockerComposeFile = 'docker-compose.integration.yml';
+
 const runCommand = (command, args, options = {}) => {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
@@ -19,7 +22,7 @@ const runCommand = (command, args, options = {}) => {
   });
 };
 
-const waitForDb = async (dbUrl, maxAttempts = 30) => {
+const waitForDb = async (dbUrl, maxAttempts = 5) => {
   const pool = new Pool({
     connectionString: dbUrl,
     connectionTimeoutMillis: 1000,
@@ -48,15 +51,15 @@ const runIntegrationTests = async () => {
   try {
     // Start test postgres instance
     console.log('Starting test postgres instance...');
-    await runCommand('docker', ['compose', '-f', 'docker-compose.integration.yml', 'up', '-d']);
+    await runCommand('docker', ['compose', '-f', dockerComposeFile, 'up', '-d']);
 
     // Wait for database to be ready
     console.log('Waiting for database to be ready...');
-    await waitForDb('postgresql://test:integration@localhost:5433/base');
+    await waitForDb(databaseUrl);
 
     // Migrate test database
     console.log('Running database migrations...');
-    process.env.DATABASE_URL = 'postgresql://test:integration@localhost:5433/base';
+    process.env.DATABASE_URL = databaseUrl;
     await runCommand('npx', ['prisma', 'migrate', 'deploy']);
 
     // Seed test database
@@ -69,7 +72,7 @@ const runIntegrationTests = async () => {
 
     // Stop test postgres instance
     console.log('Cleaning up...');
-    await runCommand('docker', ['compose', '-f', 'docker-compose.integration.yml', 'down']);
+    await runCommand('docker', ['compose', '-f', dockerComposeFile, 'down']);
 
     console.log('Integration tests completed successfully!');
   } catch (error) {
@@ -78,7 +81,7 @@ const runIntegrationTests = async () => {
   } finally {
     // Always clean up the docker containers
     try {
-      await runCommand('docker', ['compose', '-f', 'docker-compose.integration.yml', 'down']);
+      await runCommand('docker', ['compose', '-f', dockerComposeFile, 'down']);
     } catch (cleanupError) {
       console.error('Failed to clean up docker containers:', cleanupError);
     }
