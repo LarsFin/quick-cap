@@ -27,6 +27,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/jest-when": "^3.5.5",
+    "@types/lodash": "^4.14.202",
     "@types/pg": "^8.11.11",
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
@@ -52,6 +53,7 @@
     "body-parser": "^1.20.3",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "lodash": "^4.17.21",
     "prisma": "^6.5.0",
     "zod": "^3.24.2"
   }

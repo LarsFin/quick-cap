@@ -6,7 +6,7 @@ on:
       - 'apps/storage/**'
 
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-latest
     defaults:
       run:
