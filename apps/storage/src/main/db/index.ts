@@ -1,3 +1,4 @@
+import { CreateAlert, PatchAlert , ReadAlert } from "../services/alerts";
 import {
   CreateIncident,
   PatchIncident,
@@ -32,7 +33,18 @@ export interface ServicesDb {
   deleteService(id: number): PromisedQuery<UnknownDbError>;
 }
 
-export interface Db extends IncidentsDb, ServicesDb {}
+export interface AlertsDb {
+  getAlerts(): PromisedResult<ReadAlert[], UnknownDbError>;
+  getAlert(id: number): PromisedResult<ReadAlert | null, UnknownDbError>;
+  createAlert(alert: CreateAlert): PromisedResult<ReadAlert, UnknownDbError>;
+  updateAlert(
+    id: number,
+    alert: PatchAlert
+  ): PromisedResult<ReadAlert | null, UnknownDbError>;
+  deleteAlert(id: number): PromisedQuery<UnknownDbError>;
+}
+
+export interface Db extends IncidentsDb, ServicesDb, AlertsDb {}
 
 export class UnknownDbError extends Error {
   constructor(

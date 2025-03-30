@@ -5,6 +5,11 @@ import { when } from "jest-when";
 import { MissingResourceError, UnknownDbError } from "../../../main/db";
 import { PrismaDb } from "../../../main/db/prisma";
 import {
+  ReadAlert,
+  CreateAlert,
+  PatchAlert,
+} from "../../../main/services/alerts";
+import {
   ReadIncident,
   CreateIncident,
   PatchIncident,
@@ -30,6 +35,13 @@ describe("PrismaDb", () => {
         delete: jest.fn(),
       },
       service: {
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      alert: {
         findMany: jest.fn(),
         findUnique: jest.fn(),
         create: jest.fn(),
@@ -609,6 +621,304 @@ describe("PrismaDb", () => {
 
       // Act
       const err = await subject.deleteService(1);
+
+      // Assert
+      expect(err).toBeInstanceOf(UnknownDbError);
+      expect(err?.rootError).toEqual(rootError);
+    });
+  });
+
+  describe("getAlerts", () => {
+    it("should return all alerts", async () => {
+      // Arrange
+      const storedAlerts: ReadAlert[] = [
+        {
+          id: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          name: "Test Alert 1",
+          description: "Test Description 1",
+          incidentId: null,
+          serviceId: null,
+        },
+        {
+          id: 2,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          name: "Test Alert 2",
+          description: "Test Description 2",
+          incidentId: null,
+          serviceId: null,
+        },
+      ];
+
+      when(mockPrismaClient.alert.findMany).mockResolvedValue(storedAlerts);
+
+      // Act
+      const { data, err } = await subject.getAlerts();
+
+      // Assert
+      expect(data).toEqual(storedAlerts);
+      expect(err).toBeNull();
+    });
+
+    describe("when the database is unavailable", () => {
+      it("should return a DbError", async () => {
+        // Arrange
+        const rootError = new Error("Database is unavailable");
+        when(mockPrismaClient.alert.findMany).mockRejectedValue(rootError);
+
+        // Act
+        const { data, err } = await subject.getAlerts();
+
+        // Assert
+        expect(data).toBeNull();
+        expect(err).toBeInstanceOf(UnknownDbError);
+        expect(err?.rootError).toEqual(rootError);
+      });
+    });
+  });
+
+  describe("getAlert", () => {
+    it("should return an alert when found", async () => {
+      // Arrange
+      const storedAlert: ReadAlert = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Test Alert",
+        description: "Test Description",
+        incidentId: null,
+        serviceId: null,
+      };
+
+      when(mockPrismaClient.alert.findUnique)
+        .calledWith({ where: { id: 1 } })
+        .mockResolvedValue(storedAlert);
+
+      // Act
+      const { data, err } = await subject.getAlert(1);
+
+      // Assert
+      expect(data).toEqual(storedAlert);
+      expect(err).toBeNull();
+    });
+
+    it("should return null when alert not found", async () => {
+      // Arrange
+      when(mockPrismaClient.alert.findUnique)
+        .calledWith({ where: { id: 1 } })
+        .mockResolvedValue(null);
+
+      // Act
+      const { data, err } = await subject.getAlert(1);
+
+      // Assert
+      expect(data).toBeNull();
+      expect(err).toBeNull();
+    });
+
+    it("should return a DbError when database is unavailable", async () => {
+      // Arrange
+      const rootError = new Error("Database is unavailable");
+      when(mockPrismaClient.alert.findUnique)
+        .calledWith({ where: { id: 1 } })
+        .mockRejectedValue(rootError);
+
+      // Act
+      const { data, err } = await subject.getAlert(1);
+
+      // Assert
+      expect(data).toBeNull();
+      expect(err).toBeInstanceOf(UnknownDbError);
+      expect(err?.rootError).toEqual(rootError);
+    });
+  });
+
+  describe("createAlert", () => {
+    it("should create and return an alert", async () => {
+      // Arrange
+      const newAlert: CreateAlert = {
+        name: "New Alert",
+        description: "Test Description",
+      };
+      const createdAlert: ReadAlert = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "New Alert",
+        description: "Test Description",
+        incidentId: null,
+        serviceId: null,
+      };
+
+      when(mockPrismaClient.alert.create)
+        .calledWith({ data: newAlert })
+        .mockResolvedValue(createdAlert);
+
+      // Act
+      const { data, err } = await subject.createAlert(newAlert);
+
+      // Assert
+      expect(data).toEqual(createdAlert);
+      expect(err).toBeNull();
+    });
+
+    it("should return a DbError when creation fails", async () => {
+      // Arrange
+      const newAlert: CreateAlert = {
+        name: "New Alert",
+        description: "Test Description",
+      };
+      const rootError = new Error("Creation failed");
+      when(mockPrismaClient.alert.create)
+        .calledWith({ data: newAlert })
+        .mockRejectedValue(rootError);
+
+      // Act
+      const { data, err } = await subject.createAlert(newAlert);
+
+      // Assert
+      expect(data).toBeNull();
+      expect(err).toBeInstanceOf(UnknownDbError);
+      expect(err?.rootError).toEqual(rootError);
+    });
+  });
+
+  describe("updateAlert", () => {
+    it("should update and return an alert when found", async () => {
+      // Arrange
+      const updateData: PatchAlert = {
+        name: "Updated Name",
+        description: "Updated Description",
+      };
+      const updatedAlert: ReadAlert = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Updated Name",
+        description: "Updated Description",
+        incidentId: null,
+        serviceId: null,
+      };
+
+      when(mockPrismaClient.alert.update)
+        .calledWith({
+          where: { id: 1 },
+          data: updateData,
+        })
+        .mockResolvedValue(updatedAlert);
+
+      // Act
+      const { data, err } = await subject.updateAlert(1, updateData);
+
+      // Assert
+      expect(data).toEqual(updatedAlert);
+      expect(err).toBeNull();
+    });
+
+    it("should return a MissingResourceError when alert not found", async () => {
+      // Arrange
+      const updateData: PatchAlert = {
+        name: "Updated Name",
+        description: "Updated Description",
+      };
+
+      when(mockPrismaClient.alert.update)
+        .calledWith({
+          where: { id: 1 },
+          data: updateData,
+        })
+        .mockRejectedValue(
+          new PrismaClientKnownRequestError("Record to update not found.", {
+            code: "P2025",
+            clientVersion: "5.0.0",
+          })
+        );
+
+      // Act
+      const { data, err } = await subject.updateAlert(1, updateData);
+
+      // Assert
+      expect(data).toBeNull();
+      expect(err).toBeInstanceOf(MissingResourceError);
+    });
+
+    it("should return a DbError when update fails for other reasons", async () => {
+      // Arrange
+      const updateData: PatchAlert = {
+        name: "Updated Name",
+        description: "Updated Description",
+        incidentId: 2,
+        serviceId: 2,
+      };
+      const rootError = new Error("Update failed");
+      when(mockPrismaClient.alert.update)
+        .calledWith({
+          where: { id: 1 },
+          data: updateData,
+        })
+        .mockRejectedValue(rootError);
+
+      // Act
+      const { data, err } = await subject.updateAlert(1, updateData);
+
+      // Assert
+      expect(data).toBeNull();
+      expect(err).toBeInstanceOf(UnknownDbError);
+      expect(err?.rootError).toEqual(rootError);
+    });
+  });
+
+  describe("deleteAlert", () => {
+    it("should delete an alert successfully", async () => {
+      // Arrange
+      when(mockPrismaClient.alert.delete)
+        .calledWith({ where: { id: 1 } })
+        .mockResolvedValue({
+          id: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          name: "Deleted Alert",
+          description: "Test Description",
+          incidentId: 1,
+          serviceId: 1,
+        });
+
+      // Act
+      const err = await subject.deleteAlert(1);
+
+      // Assert
+      expect(err).toBeNull();
+    });
+
+    it("should return a MissingResourceError when alert not found", async () => {
+      // Arrange
+      when(mockPrismaClient.alert.delete)
+        .calledWith({ where: { id: 1 } })
+        .mockRejectedValue(
+          new PrismaClientKnownRequestError("Record to delete not found.", {
+            code: "P2025",
+            clientVersion: "5.0.0",
+          })
+        );
+
+      // Act
+      const err = await subject.deleteAlert(1);
+
+      // Assert
+      expect(err).toBeInstanceOf(MissingResourceError);
+    });
+
+    it("should return a DbError when deletion fails", async () => {
+      // Arrange
+      const rootError = new Error("Deletion failed");
+      when(mockPrismaClient.alert.delete)
+        .calledWith({ where: { id: 1 } })
+        .mockRejectedValue(rootError);
+
+      // Act
+      const err = await subject.deleteAlert(1);
 
       // Assert
       expect(err).toBeInstanceOf(UnknownDbError);

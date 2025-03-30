@@ -1,11 +1,13 @@
 import express, { Express } from "express";
 
 import { initPrismaDb } from "../db/prisma";
+import { Alerts } from "../services/alerts";
 import { Incidents } from "../services/incidents";
 import { Services } from "../services/services";
 import { Config } from "../utils/config";
 import { Logger, resolveLogger } from "../utils/logger";
 
+import { initialiseAlertsHandlers } from "./handlers/alerts";
 import { initialiseIncidentsHandlers } from "./handlers/incidents";
 import { initialiseServicesHandlers } from "./handlers/services";
 import { challengeBearerToken } from "./middleware/auth";
@@ -14,6 +16,7 @@ export type AppDependencies = {
   config: Config;
   incidents: Incidents;
   services: Services;
+  alerts: Alerts;
   logger: Logger;
 };
 
@@ -25,12 +28,14 @@ export const initialiseDependencies = (config: Config): AppDependencies => {
 
   const incidents = new Incidents(db, logger);
   const services = new Services(db, logger);
+  const alerts = new Alerts(db, logger);
 
-  return { config, incidents, services, logger };
+  return { config, incidents, services, alerts, logger };
 };
 
 export const createApp = (deps: AppDependencies): Express => {
   const app = express();
+
   app.use(express.json());
 
   const router = express.Router();
@@ -43,6 +48,8 @@ export const createApp = (deps: AppDependencies): Express => {
 
   initialiseIncidentsHandlers(router, deps);
   initialiseServicesHandlers(router, deps);
+  initialiseAlertsHandlers(router, deps);
+
   app.use("/api/v1", router);
 
   return app;

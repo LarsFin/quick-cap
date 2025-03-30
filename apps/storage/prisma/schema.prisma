@@ -10,6 +10,20 @@ model Incident {
   name String
   description String?
   status IncidentStatus @default(open)
+
+  alerts Alert[]
+}
+
+model Alert {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  incidentId Int?
+  incident Incident? @relation(fields: [incidentId], references: [id])
+  serviceId Int?
+  service Service? @relation(fields: [serviceId], references: [id])
+  name String
+  description String?
 }
 
 model Service {
@@ -18,6 +32,8 @@ model Service {
   updatedAt DateTime @updatedAt
   name String
   description String?
+
+  alerts Alert[]
 }
 
 enum IncidentStatus {

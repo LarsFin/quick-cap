@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
+import { CreateAlert, PatchAlert, ReadAlert } from "../services/alerts";
 import {
   CreateIncident,
   PatchIncident,
@@ -102,6 +103,50 @@ export class PrismaDb implements Db {
     const result = await this.handleSafely(async () => {
       await this.client.service.delete({ where: { id } });
     }, "There was a Prisma Error when deleting a service");
+
+    return result.err;
+  }
+
+  public async getAlerts(): PromisedResult<ReadAlert[], UnknownDbError> {
+    return this.handleSafely(
+      async () => await this.client.alert.findMany(),
+      "There was a Prisma Error when getting alerts"
+    );
+  }
+
+  public async getAlert(
+    id: number
+  ): PromisedResult<ReadAlert | null, UnknownDbError> {
+    return this.handleSafely(
+      async () => await this.client.alert.findUnique({ where: { id } }),
+      "There was a Prisma Error when getting an alert"
+    );
+  }
+
+  public async createAlert(
+    alert: CreateAlert
+  ): PromisedResult<ReadAlert, UnknownDbError> {
+    return this.handleSafely(
+      async () => await this.client.alert.create({ data: alert }),
+      "There was a Prisma Error when creating an alert"
+    );
+  }
+
+  public async updateAlert(
+    id: number,
+    alert: PatchAlert
+  ): PromisedResult<ReadAlert | null, UnknownDbError> {
+    return this.handleSafely(
+      async () =>
+        await this.client.alert.update({ where: { id }, data: alert }),
+      "There was a Prisma Error when updating an alert"
+    );
+  }
+
+  public async deleteAlert(id: number): PromisedQuery<UnknownDbError> {
+    const result = await this.handleSafely(async () => {
+      await this.client.alert.delete({ where: { id } });
+    }, "There was a Prisma Error when deleting an alert");
 
     return result.err;
   }

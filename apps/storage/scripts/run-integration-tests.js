@@ -68,7 +68,7 @@ const runIntegrationTests = async () => {
 
     // Run tests
     console.log('Running integration tests...');
-    await runCommand('npx', ['jest', '--config', 'jest.config.integration.js', ...process.argv.slice(2)]);
+    await runCommand('npx', ['jest', '--config', 'jest.config.integration.js', '--runInBand', ...process.argv.slice(2)]);
 
     console.log('Integration tests completed successfully!');
   } catch (error) {

@@ -31,6 +31,23 @@ export const main = async () => {
       },
     ],
   });
+
+  await prisma.alert.createMany({
+    data: [
+      {
+        name: "API Gateway Alert",
+        description: "API Gateway service is experiencing high latency",
+        serviceId: 1,
+        incidentId: 1,
+      },
+      {
+        name: "User Service Alert",
+        description: "User service is experiencing high latency",
+        serviceId: 2,
+        incidentId: 1,
+      },
+    ],
+  });
 };
 
 main()
