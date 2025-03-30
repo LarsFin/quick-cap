@@ -6,6 +6,7 @@ import {
   PatchIncident,
   ReadIncident,
 } from "../services/incidents";
+import { CreateService, PatchService, ReadService } from "../services/services";
 import { ensureError } from "../utils/ensureError";
 import { err, PromisedResult, res, PromisedQuery } from "../utils/result";
 
@@ -57,6 +58,50 @@ export class PrismaDb implements Db {
     const result = await this.handleSafely(async () => {
       await this.client.incident.delete({ where: { id } });
     }, "There was a Prisma Error when deleting an incident");
+
+    return result.err;
+  }
+
+  public async getServices(): PromisedResult<ReadService[], UnknownDbError> {
+    return this.handleSafely(
+      async () => await this.client.service.findMany(),
+      "There was a Prisma Error when getting services"
+    );
+  }
+
+  public async getService(
+    id: number
+  ): PromisedResult<ReadService | null, UnknownDbError> {
+    return this.handleSafely(
+      async () => await this.client.service.findUnique({ where: { id } }),
+      "There was a Prisma Error when getting a service"
+    );
+  }
+
+  public async createService(
+    service: CreateService
+  ): PromisedResult<ReadService, UnknownDbError> {
+    return this.handleSafely(
+      async () => await this.client.service.create({ data: service }),
+      "There was a Prisma Error when creating a service"
+    );
+  }
+
+  public async updateService(
+    id: number,
+    service: PatchService
+  ): PromisedResult<ReadService | null, UnknownDbError> {
+    return this.handleSafely(
+      async () =>
+        await this.client.service.update({ where: { id }, data: service }),
+      "There was a Prisma Error when updating a service"
+    );
+  }
+
+  public async deleteService(id: number): PromisedQuery<UnknownDbError> {
+    const result = await this.handleSafely(async () => {
+      await this.client.service.delete({ where: { id } });
+    }, "There was a Prisma Error when deleting a service");
 
     return result.err;
   }

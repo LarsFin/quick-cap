@@ -9,6 +9,11 @@ import {
   CreateIncident,
   PatchIncident,
 } from "../../../main/services/incidents";
+import {
+  ReadService,
+  CreateService,
+  PatchService,
+} from "../../../main/services/services";
 
 describe("PrismaDb", () => {
   let subject: PrismaDb;
@@ -18,6 +23,13 @@ describe("PrismaDb", () => {
   beforeEach(() => {
     mockPrismaClient = {
       incident: {
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      service: {
         findMany: jest.fn(),
         findUnique: jest.fn(),
         create: jest.fn(),
@@ -314,6 +326,289 @@ describe("PrismaDb", () => {
 
       // Act
       const err = await subject.deleteIncident(1);
+
+      // Assert
+      expect(err).toBeInstanceOf(UnknownDbError);
+      expect(err?.rootError).toEqual(rootError);
+    });
+  });
+
+  describe("getServices", () => {
+    it("should return all services", async () => {
+      // Arrange
+      const storedServices: ReadService[] = [
+        {
+          id: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          name: "Test Service 1",
+          description: "Test Description 1",
+        },
+        {
+          id: 2,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          name: "Test Service 2",
+          description: "Test Description 2",
+        },
+      ];
+
+      when(mockPrismaClient.service.findMany).mockResolvedValue(storedServices);
+
+      // Act
+      const { data, err } = await subject.getServices();
+
+      // Assert
+      expect(data).toEqual(storedServices);
+      expect(err).toBeNull();
+    });
+
+    describe("when the database is unavailable", () => {
+      it("should return a DbError", async () => {
+        // Arrange
+        const rootError = new Error("Database is unavailable");
+        when(mockPrismaClient.service.findMany).mockRejectedValue(rootError);
+
+        // Act
+        const { data, err } = await subject.getServices();
+
+        // Assert
+        expect(data).toBeNull();
+        expect(err).toBeInstanceOf(UnknownDbError);
+        expect(err?.rootError).toEqual(rootError);
+      });
+    });
+  });
+
+  describe("getService", () => {
+    it("should return a service when found", async () => {
+      // Arrange
+      const storedService: ReadService = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Test Service",
+        description: "Test Description",
+      };
+
+      when(mockPrismaClient.service.findUnique)
+        .calledWith({ where: { id: 1 } })
+        .mockResolvedValue(storedService);
+
+      // Act
+      const { data, err } = await subject.getService(1);
+
+      // Assert
+      expect(data).toEqual(storedService);
+      expect(err).toBeNull();
+    });
+
+    it("should return null when service not found", async () => {
+      // Arrange
+      when(mockPrismaClient.service.findUnique)
+        .calledWith({ where: { id: 1 } })
+        .mockResolvedValue(null);
+
+      // Act
+      const { data, err } = await subject.getService(1);
+
+      // Assert
+      expect(data).toBeNull();
+      expect(err).toBeNull();
+    });
+
+    it("should return a DbError when database is unavailable", async () => {
+      // Arrange
+      const rootError = new Error("Database is unavailable");
+      when(mockPrismaClient.service.findUnique)
+        .calledWith({ where: { id: 1 } })
+        .mockRejectedValue(rootError);
+
+      // Act
+      const { data, err } = await subject.getService(1);
+
+      // Assert
+      expect(data).toBeNull();
+      expect(err).toBeInstanceOf(UnknownDbError);
+      expect(err?.rootError).toEqual(rootError);
+    });
+  });
+
+  describe("createService", () => {
+    it("should create and return a service", async () => {
+      // Arrange
+      const newService: CreateService = {
+        name: "New Service",
+        description: "Test Description",
+      };
+      const createdService: ReadService = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...newService,
+      };
+
+      when(mockPrismaClient.service.create)
+        .calledWith({ data: newService })
+        .mockResolvedValue(createdService);
+
+      // Act
+      const { data, err } = await subject.createService(newService);
+
+      // Assert
+      expect(data).toEqual(createdService);
+      expect(err).toBeNull();
+    });
+
+    it("should return a DbError when creation fails", async () => {
+      // Arrange
+      const newService: CreateService = {
+        name: "New Service",
+        description: "Test Description",
+      };
+      const rootError = new Error("Creation failed");
+      when(mockPrismaClient.service.create)
+        .calledWith({ data: newService })
+        .mockRejectedValue(rootError);
+
+      // Act
+      const { data, err } = await subject.createService(newService);
+
+      // Assert
+      expect(data).toBeNull();
+      expect(err).toBeInstanceOf(UnknownDbError);
+      expect(err?.rootError).toEqual(rootError);
+    });
+  });
+
+  describe("updateService", () => {
+    it("should update and return a service when found", async () => {
+      // Arrange
+      const updateData: PatchService = {
+        name: "Updated Name",
+        description: "Updated Description",
+      };
+      const updatedService: ReadService = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Updated Name",
+        description: "Updated Description",
+      };
+
+      when(mockPrismaClient.service.update)
+        .calledWith({
+          where: { id: 1 },
+          data: updateData,
+        })
+        .mockResolvedValue(updatedService);
+
+      // Act
+      const { data, err } = await subject.updateService(1, updateData);
+
+      // Assert
+      expect(data).toEqual(updatedService);
+      expect(err).toBeNull();
+    });
+
+    it("should return a MissingResourceError when service not found", async () => {
+      // Arrange
+      const updateData: PatchService = {
+        name: "Updated Name",
+        description: "Updated Description",
+      };
+
+      when(mockPrismaClient.service.update)
+        .calledWith({
+          where: { id: 1 },
+          data: updateData,
+        })
+        .mockRejectedValue(
+          new PrismaClientKnownRequestError("Record to update not found.", {
+            code: "P2025",
+            clientVersion: "5.0.0",
+          })
+        );
+
+      // Act
+      const { data, err } = await subject.updateService(1, updateData);
+
+      // Assert
+      expect(data).toBeNull();
+      expect(err).toBeInstanceOf(MissingResourceError);
+    });
+
+    it("should return a DbError when update fails for other reasons", async () => {
+      // Arrange
+      const updateData: PatchService = {
+        name: "Updated Name",
+        description: "Updated Description",
+      };
+      const rootError = new Error("Update failed");
+      when(mockPrismaClient.service.update)
+        .calledWith({
+          where: { id: 1 },
+          data: updateData,
+        })
+        .mockRejectedValue(rootError);
+
+      // Act
+      const { data, err } = await subject.updateService(1, updateData);
+
+      // Assert
+      expect(data).toBeNull();
+      expect(err).toBeInstanceOf(UnknownDbError);
+      expect(err?.rootError).toEqual(rootError);
+    });
+  });
+
+  describe("deleteService", () => {
+    it("should delete a service successfully", async () => {
+      // Arrange
+      when(mockPrismaClient.service.delete)
+        .calledWith({ where: { id: 1 } })
+        .mockResolvedValue({
+          id: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          name: "Deleted Service",
+          description: "Test Description",
+        });
+
+      // Act
+      const err = await subject.deleteService(1);
+
+      // Assert
+      expect(err).toBeNull();
+    });
+
+    it("should return a MissingResourceError when service not found", async () => {
+      // Arrange
+      when(mockPrismaClient.service.delete)
+        .calledWith({ where: { id: 1 } })
+        .mockRejectedValue(
+          new PrismaClientKnownRequestError("Record to delete not found.", {
+            code: "P2025",
+            clientVersion: "5.0.0",
+          })
+        );
+
+      // Act
+      const err = await subject.deleteService(1);
+
+      // Assert
+      expect(err).toBeInstanceOf(MissingResourceError);
+    });
+
+    it("should return a DbError when deletion fails", async () => {
+      // Arrange
+      const rootError = new Error("Deletion failed");
+      when(mockPrismaClient.service.delete)
+        .calledWith({ where: { id: 1 } })
+        .mockRejectedValue(rootError);
+
+      // Act
+      const err = await subject.deleteService(1);
 
       // Assert
       expect(err).toBeInstanceOf(UnknownDbError);

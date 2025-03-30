@@ -12,6 +12,14 @@ model Incident {
   status IncidentStatus @default(open)
 }
 
+model Service {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name String
+  description String?
+}
+
 enum IncidentStatus {
   open
   closed

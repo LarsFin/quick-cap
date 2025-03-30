@@ -1,6 +1,6 @@
 import { z, ZodError } from "zod";
 
-import { Db, MissingResourceError } from "../db";
+import { IncidentsDb, MissingResourceError } from "../db";
 import { Logger } from "../utils/logger";
 import { err, ok, PromisedQuery, PromisedResult, res } from "../utils/result";
 
@@ -30,7 +30,7 @@ export type PatchIncident = z.infer<typeof patchIncidentSchema>;
 
 export class Incidents {
   constructor(
-    private readonly db: Db,
+    private readonly db: IncidentsDb,
     private readonly logger: Logger
   ) {}
 

@@ -18,6 +18,19 @@ export const main = async () => {
       },
     ],
   });
+
+  await prisma.service.createMany({
+    data: [
+      {
+        name: "API Gateway",
+        description: "Main API Gateway service",
+      },
+      {
+        name: "User Service",
+        description: "User management service",
+      },
+    ],
+  });
 };
 
 main()

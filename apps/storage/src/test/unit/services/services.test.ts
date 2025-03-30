@@ -2,31 +2,30 @@ import { when } from "jest-when";
 import { ZodError } from "zod";
 
 import {
-  IncidentsDb,
+  ServicesDb,
   MissingResourceError,
   UnknownDbError,
 } from "../../../main/db";
 import {
-  Incidents,
-  ReadIncident,
-  CreateIncident,
-  PatchIncident,
-} from "../../../main/services/incidents";
+  Services,
+  ReadService,
+  CreateService,
+  PatchService,
+} from "../../../main/services/services";
 import { Logger } from "../../../main/utils/logger";
 
-describe("Incidents", () => {
-  let subject: Incidents;
-
-  let mockDb: IncidentsDb;
+describe("Services", () => {
+  let subject: Services;
+  let mockDb: ServicesDb;
   let mockLogger: Logger;
 
   beforeEach(() => {
     mockDb = {
-      getIncidents: jest.fn(),
-      getIncident: jest.fn(),
-      createIncident: jest.fn(),
-      updateIncident: jest.fn(),
-      deleteIncident: jest.fn(),
+      getServices: jest.fn(),
+      getService: jest.fn(),
+      createService: jest.fn(),
+      updateService: jest.fn(),
+      deleteService: jest.fn(),
     };
 
     mockLogger = {
@@ -35,39 +34,37 @@ describe("Incidents", () => {
       debug: jest.fn(),
     } as unknown as Logger;
 
-    subject = new Incidents(mockDb, mockLogger);
+    subject = new Services(mockDb, mockLogger);
   });
 
   describe("get", () => {
-    it("should return an incident using the id", async () => {
+    it("should return a service using the id", async () => {
       // Arrange
-      const incidentId = 1;
-
-      const incident: ReadIncident = {
-        id: incidentId,
+      const serviceId = 1;
+      const service: ReadService = {
+        id: serviceId,
         createdAt: new Date(),
         updatedAt: new Date(),
-        name: "Test Incident",
+        name: "Test Service",
         description: "Test Description",
-        status: "open",
       };
 
-      when(mockDb.getIncident).calledWith(1).mockResolvedValue({
-        data: incident,
+      when(mockDb.getService).calledWith(1).mockResolvedValue({
+        data: service,
         err: null,
       });
 
       // Act
-      const { data, err } = await subject.get(incidentId);
+      const { data, err } = await subject.get(serviceId);
 
       // Assert
-      expect(data).toEqual(incident);
+      expect(data).toEqual(service);
       expect(err).toBeNull();
     });
 
-    it("should return null when incident not found", async () => {
+    it("should return null when service not found", async () => {
       // Arrange
-      when(mockDb.getIncident).calledWith(1).mockResolvedValue({
+      when(mockDb.getService).calledWith(1).mockResolvedValue({
         data: null,
         err: null,
       });
@@ -83,7 +80,7 @@ describe("Incidents", () => {
     it("should return a DbError when database is unavailable", async () => {
       // Arrange
       const dbError = new UnknownDbError("Database is unavailable");
-      when(mockDb.getIncident).calledWith(1).mockResolvedValue({
+      when(mockDb.getService).calledWith(1).mockResolvedValue({
         data: null,
         err: dbError,
       });
@@ -103,15 +100,14 @@ describe("Incidents", () => {
         id: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
-        name: "Test Incident",
+        name: 123, // Should be string
         description: "Test Description",
-        status: "invalid",
       };
 
-      when(mockDb.getIncident)
+      when(mockDb.getService)
         .calledWith(1)
         .mockResolvedValue({
-          data: corruptedData as ReadIncident,
+          data: corruptedData as unknown as ReadService,
           err: null,
         });
 
@@ -125,29 +121,27 @@ describe("Incidents", () => {
   });
 
   describe("getAll", () => {
-    it("should return all incidents", async () => {
+    it("should return all services", async () => {
       // Arrange
-      const incidents: ReadIncident[] = [
+      const services: ReadService[] = [
         {
           id: 1,
           createdAt: new Date(),
           updatedAt: new Date(),
-          name: "Test Incident 1",
+          name: "Test Service 1",
           description: "Test Description 1",
-          status: "open",
         },
         {
           id: 2,
           createdAt: new Date(),
           updatedAt: new Date(),
-          name: "Test Incident 2",
+          name: "Test Service 2",
           description: "Test Description 2",
-          status: "closed",
         },
       ];
 
-      when(mockDb.getIncidents).mockResolvedValue({
-        data: incidents,
+      when(mockDb.getServices).mockResolvedValue({
+        data: services,
         err: null,
       });
 
@@ -155,14 +149,14 @@ describe("Incidents", () => {
       const { data, err } = await subject.getAll();
 
       // Assert
-      expect(data).toEqual(incidents);
+      expect(data).toEqual(services);
       expect(err).toBeNull();
     });
 
     it("should return a DbError when database is unavailable", async () => {
       // Arrange
       const dbError = new UnknownDbError("Database is unavailable");
-      when(mockDb.getIncidents).mockResolvedValue({
+      when(mockDb.getServices).mockResolvedValue({
         data: null,
         err: dbError,
       });
@@ -183,14 +177,13 @@ describe("Incidents", () => {
           id: 1,
           createdAt: new Date(),
           updatedAt: new Date(),
-          name: "Test Incident",
+          name: 123, // Should be string
           description: "Test Description",
-          status: "invalid",
         },
       ];
 
-      when(mockDb.getIncidents).mockResolvedValue({
-        data: corruptedData as ReadIncident[],
+      when(mockDb.getServices).mockResolvedValue({
+        data: corruptedData as unknown as ReadService[],
         err: null,
       });
 
@@ -204,31 +197,30 @@ describe("Incidents", () => {
   });
 
   describe("create", () => {
-    it("should create and return an incident", async () => {
+    it("should create and return a service", async () => {
       // Arrange
-      const newIncident: CreateIncident = {
-        name: "New Incident",
+      const newService: CreateService = {
+        name: "New Service",
         description: "Test Description",
-        status: "open",
       };
 
-      const createdIncident: ReadIncident = {
+      const createdService: ReadService = {
         id: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
-        ...newIncident,
+        ...newService,
       };
 
-      when(mockDb.createIncident).calledWith(newIncident).mockResolvedValue({
-        data: createdIncident,
+      when(mockDb.createService).calledWith(newService).mockResolvedValue({
+        data: createdService,
         err: null,
       });
 
       // Act
-      const { data, err } = await subject.create(newIncident);
+      const { data, err } = await subject.create(newService);
 
       // Assert
-      expect(data).toEqual(createdIncident);
+      expect(data).toEqual(createdService);
       expect(err).toBeNull();
     });
 
@@ -237,7 +229,6 @@ describe("Incidents", () => {
       const invalidPayload = {
         name: 123, // Should be string
         description: "Test Description",
-        status: "invalid-status", // Invalid status
       };
 
       // Act
@@ -250,20 +241,19 @@ describe("Incidents", () => {
 
     it("should return a DbError when creation fails", async () => {
       // Arrange
-      const newIncident: CreateIncident = {
-        name: "New Incident",
+      const newService: CreateService = {
+        name: "New Service",
         description: "Test Description",
-        status: "open",
       };
 
       const dbError = new UnknownDbError("Creation failed");
-      when(mockDb.createIncident).calledWith(newIncident).mockResolvedValue({
+      when(mockDb.createService).calledWith(newService).mockResolvedValue({
         data: null,
         err: dbError,
       });
 
       // Act
-      const { data, err } = await subject.create(newIncident);
+      const { data, err } = await subject.create(newService);
 
       // Assert
       expect(data).toBeNull();
@@ -273,24 +263,23 @@ describe("Incidents", () => {
   });
 
   describe("patch", () => {
-    it("should update and return an incident", async () => {
+    it("should update and return a service", async () => {
       // Arrange
-      const updateData: PatchIncident = {
+      const updateData: PatchService = {
         name: "Updated Name",
-        status: "closed",
+        description: "Updated Description",
       };
 
-      const updatedIncident: ReadIncident = {
+      const updatedService: ReadService = {
         id: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
         name: "Updated Name",
-        description: "Test Description",
-        status: "closed",
+        description: "Updated Description",
       };
 
-      when(mockDb.updateIncident).calledWith(1, updateData).mockResolvedValue({
-        data: updatedIncident,
+      when(mockDb.updateService).calledWith(1, updateData).mockResolvedValue({
+        data: updatedService,
         err: null,
       });
 
@@ -298,22 +287,22 @@ describe("Incidents", () => {
       const { data, err } = await subject.patch(1, updateData);
 
       // Assert
-      expect(data).toEqual(updatedIncident);
+      expect(data).toEqual(updatedService);
       expect(err).toBeNull();
     });
 
-    it("should return null when incident not found", async () => {
+    it("should return null when service not found", async () => {
       // Arrange
-      const updateData: PatchIncident = {
+      const updateData: PatchService = {
         name: "Updated Name",
-        status: "closed",
+        description: "Updated Description",
       };
 
-      when(mockDb.updateIncident)
+      when(mockDb.updateService)
         .calledWith(1, updateData)
         .mockResolvedValue({
           data: null,
-          err: new MissingResourceError("Incident not found"),
+          err: new MissingResourceError("Service not found"),
         });
 
       // Act
@@ -328,7 +317,7 @@ describe("Incidents", () => {
       // Arrange
       const invalidPayload = {
         name: 123, // Should be string
-        status: "invalid-status", // Invalid status
+        description: "Test Description",
       };
 
       // Act
@@ -341,13 +330,13 @@ describe("Incidents", () => {
 
     it("should return a DbError when update fails", async () => {
       // Arrange
-      const updateData: PatchIncident = {
+      const updateData: PatchService = {
         name: "Updated Name",
-        status: "closed",
+        description: "Updated Description",
       };
 
       const dbError = new UnknownDbError("Update failed");
-      when(mockDb.updateIncident).calledWith(1, updateData).mockResolvedValue({
+      when(mockDb.updateService).calledWith(1, updateData).mockResolvedValue({
         data: null,
         err: dbError,
       });
@@ -363,9 +352,9 @@ describe("Incidents", () => {
   });
 
   describe("delete", () => {
-    it("should delete an incident successfully", async () => {
+    it("should delete a service successfully", async () => {
       // Arrange
-      when(mockDb.deleteIncident).calledWith(1).mockResolvedValue(null);
+      when(mockDb.deleteService).calledWith(1).mockResolvedValue(null);
 
       // Act
       const err = await subject.delete(1);
@@ -376,9 +365,9 @@ describe("Incidents", () => {
 
     it("should return ok when missing resource", async () => {
       // Arrange
-      when(mockDb.deleteIncident)
+      when(mockDb.deleteService)
         .calledWith(1)
-        .mockResolvedValue(new MissingResourceError("Incident not found"));
+        .mockResolvedValue(new MissingResourceError("Service not found"));
 
       // Act
       const err = await subject.delete(1);
@@ -390,7 +379,7 @@ describe("Incidents", () => {
     it("should return a DbError when deletion fails", async () => {
       // Arrange
       const dbError = new UnknownDbError("Deletion failed");
-      when(mockDb.deleteIncident).calledWith(1).mockResolvedValue(dbError);
+      when(mockDb.deleteService).calledWith(1).mockResolvedValue(dbError);
 
       // Act
       const err = await subject.delete(1);
